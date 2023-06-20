@@ -24,17 +24,25 @@ func NewBook(orderChan chan *Order, orderChanOut chan *Order, wg *sync.WaitGroup
 }
 
 func (b *Book) Trade() {
-	buyOrders := NewOrderQueue()
-	sellOrders := NewOrderQueue()
-
-	heap.Init(buyOrders)
-	heap.Init(sellOrders)
+	buyOrders := make(map[string]*OrderQueue)
+	sellOrders := make(map[string]*OrderQueue)
 
 	for order := range b.OrdersChan {
+		assetId := order.Asset.ID
+
+		if buyOrders[assetId] == nil {
+			buyOrders[assetId] = NewOrderQueue()
+			heap.Init(buyOrders[assetId])
+		}
+		if sellOrders[assetId] == nil {
+			sellOrders[assetId] = NewOrderQueue()
+			heap.Init(sellOrders[assetId])
+		}
+
 		if order.OrderType == "BUY" {
-			buyOrders.Push(order)
-			if sellOrders.Len() > 0 && sellOrders.Orders[0].Price <= order.Price {
-				sellOrder := sellOrders.Pop().(*Order)
+			buyOrders[assetId].Push(order)
+			if sellOrders[assetId].Len() > 0 && sellOrders[assetId].Orders[0].Price <= order.Price {
+				sellOrder := sellOrders[assetId].Pop().(*Order)
 				if sellOrder.PendingShares > 0 {
 					transaction := NewTransaction(sellOrder, order, order.Shares, sellOrder.Price)
 					b.addTransaction(transaction, b.Wg)
@@ -43,14 +51,14 @@ func (b *Book) Trade() {
 					b.OrdersChanOut <- sellOrder
 					b.OrdersChanOut <- order
 					if sellOrder.PendingShares > 0 {
-						sellOrders.Push(sellOrder)
+						sellOrders[assetId].Push(sellOrder)
 					}
 				}
 			}
 		} else if order.OrderType == "SELL" {
-			sellOrders.Push(order)
-			if buyOrders.Len() > 0 && buyOrders.Orders[0].Price >= order.Price {
-				buyOrder := buyOrders.Pop().(*Order)
+			sellOrders[assetId].Push(order)
+			if buyOrders[assetId].Len() > 0 && buyOrders[assetId].Orders[0].Price >= order.Price {
+				buyOrder := buyOrders[assetId].Pop().(*Order)
 				if buyOrder.PendingShares > 0 {
 					transaction := NewTransaction(order, buyOrder, order.Shares, buyOrder.Price)
 					b.addTransaction(transaction, b.Wg)
@@ -59,7 +67,7 @@ func (b *Book) Trade() {
 					b.OrdersChanOut <- buyOrder
 					b.OrdersChanOut <- order
 					if buyOrder.PendingShares > 0 {
-						buyOrders.Push(buyOrder)
+						buyOrders[assetId].Push(buyOrder)
 					}
 				}
 			}
