@@ -3,12 +3,13 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	ckafka "github.com/confluentinc/confluent-kafka-go/kafka"
-	"github.com/larezende/homebroker_fullcycle/orders_processor_go/internal/infra/kafka"
-	"github.com/larezende/homebroker_fullcycle/orders_processor_go/internal/market/dto"
-	"github.com/larezende/homebroker_fullcycle/orders_processor_go/internal/market/entity"
-	"github.com/larezende/homebroker_fullcycle/orders_processor_go/internal/market/transformer"
 	"sync"
+
+	ckafka "github.com/confluentinc/confluent-kafka-go/kafka"
+	"gitlab.com/homebroker_fc/orders_processor_go/internal/infra/kafka"
+	"gitlab.com/homebroker_fc/orders_processor_go/internal/market/dto"
+	"gitlab.com/homebroker_fc/orders_processor_go/internal/market/entity"
+	"gitlab.com/homebroker_fc/orders_processor_go/internal/market/transformer"
 )
 
 func main() {
@@ -19,7 +20,7 @@ func main() {
 
 	kafkaMsgChan := make(chan *ckafka.Message)
 	configMap := &ckafka.ConfigMap{
-		"bootstrap.servers": "localhost:9094",
+		"bootstrap.servers": "host.docker.internal:9094",
 		"group.id":          "myGroup",
 		"auto.offset.reset": "earliest",
 	}
@@ -33,7 +34,6 @@ func main() {
 	go book.Trade() // T3
 
 	go func() {
-		fmt.Println("consumindo")
 		for msg := range kafkaMsgChan {
 			wg.Add(1)
 			fmt.Println(string(msg.Value))

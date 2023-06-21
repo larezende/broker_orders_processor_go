@@ -1,8 +1,8 @@
 package transformer
 
 import (
-	"github.com/larezende/homebroker_fullcycle/orders_processor_go/internal/market/dto"
-	"github.com/larezende/homebroker_fullcycle/orders_processor_go/internal/market/entity"
+	"gitlab.com/homebroker_fc/orders_processor_go/internal/market/dto"
+	"gitlab.com/homebroker_fc/orders_processor_go/internal/market/entity"
 )
 
 func TransformInput(input dto.TradeInput) *entity.Order {
@@ -26,16 +26,19 @@ func TransformOutput(order *entity.Order) *dto.OrderOutput {
 		Partial:    order.PendingShares,
 		Shares:     order.Shares,
 	}
-	var transactionOutput []*dto.TransactionOutput
+
+	var transactionsOutput []*dto.TransactionOutput
 	for _, t := range order.Transactions {
-		transactionOutput = append(transactionOutput, &dto.TransactionOutput{
+		transactionOutput := &dto.TransactionOutput{
 			TransactionID: t.ID,
-			BuyerID:       t.BuyingOrder.ID,
-			SellerID:      t.SellingOrder.ID,
+			BuyerID:       t.BuyingOrder.Investor.ID,
+			SellerID:      t.SellingOrder.Investor.ID,
 			AssetID:       t.SellingOrder.Asset.ID,
 			Price:         t.Price,
-			Shares:        t.SellingOrder.Shares - t.BuyingOrder.Shares,
-		})
+			Shares:        t.SellingOrder.Shares - t.SellingOrder.PendingShares,
+		}
+		transactionsOutput = append(transactionsOutput, transactionOutput)
 	}
+	output.TransactionsOutput = transactionsOutput
 	return output
 }

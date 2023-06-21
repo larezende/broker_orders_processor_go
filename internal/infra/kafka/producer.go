@@ -12,7 +12,7 @@ func NewKafkaProducer(configMap *ckafka.ConfigMap) *Producer {
 	}
 }
 
-func (p *Producer) Publish(payload interface{}, key []byte, topic string) error {
+func (p *Producer) Publish(msg interface{}, key []byte, topic string) error {
 	producer, err := ckafka.NewProducer(p.ConfigMap)
 	if err != nil {
 		return err
@@ -21,13 +21,12 @@ func (p *Producer) Publish(payload interface{}, key []byte, topic string) error 
 	message := &ckafka.Message{
 		TopicPartition: ckafka.TopicPartition{Topic: &topic, Partition: ckafka.PartitionAny},
 		Key:            key,
-		Value:          payload.([]byte),
+		Value:          msg.([]byte),
 	}
 
 	err = producer.Produce(message, nil)
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
