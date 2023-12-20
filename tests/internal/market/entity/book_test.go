@@ -1,7 +1,7 @@
 package entity
 
 import (
-	"gitlab.com/homebroker_fc/orders_processor_go/internal/market/entity"
+	"github.com/larezende/broker_orders_processor_go/internal/market/entity"
 	"sync"
 	"testing"
 

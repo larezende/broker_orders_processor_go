@@ -1,4 +1,4 @@
-module gitlab.com/homebroker_fc/orders_processor_go
+module github.com/larezende/broker_orders_processor_go
 
 go 1.18
 
